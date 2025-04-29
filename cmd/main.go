@@ -1,18 +1,18 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"time"
 
 	"example.com/go-learning-prj/api/route"
 	"github.com/gin-gonic/gin"
-	_ "github.com/go-sql-driver/mysql"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
 const (
-	mySqlDbType     = "mysql"
-	openSqlDbScript = "root:Aa@123456@tcp(localhost:3306)/book_management"
+	mySqlDbType = "mysql"
+	mySqlDsn    = "root:Aa@123456@tcp(localhost:3306)/book_management"
 )
 
 func main() {
@@ -22,15 +22,14 @@ func main() {
 		}
 	}()
 
-	db, err := sql.Open(mySqlDbType, openSqlDbScript)
+	db, err := gorm.Open(mysql.Open(mySqlDsn), &gorm.Config{})
 	if err != nil {
 		panic(fmt.Sprintf("open db failed %s", err))
 	}
 
-	// Check connection before query
-	if err := db.Ping(); err != nil {
-		panic("keep connection to db failed")
-	}
+	sqlDB, _ := db.DB()
+	sqlDB.SetMaxIdleConns(10)
+	sqlDB.SetMaxOpenConns(100)
 
 	timeout := time.Duration(120) * time.Second
 
